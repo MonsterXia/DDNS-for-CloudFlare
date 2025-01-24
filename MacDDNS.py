@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from datetime import datetime
 from urllib3.exceptions import MaxRetryError, SSLError
 # Ignore proxy
 os.environ['no_proxy'] = '*'
@@ -17,6 +18,9 @@ ZONE_ID = ""
 # Your DNS Record ID
 RECORD_ID_v4 = ""
 RECORD_ID_v6 = ""
+
+# Log output path
+LOG_DIR = "logs.txt"
 
 def get_current_ip_v4():
     response = requests.get('http://httpbin.org/ip')
@@ -52,7 +56,7 @@ def update_cloudflare_dns(ip, mode):
     }
     payload = {
         "type": f"{type}",  # Adjust accordingly if you need different record type
-        "name": "mac.246801357.xyz",  # e.g., "example.com" or "sub.example.com"
+        "name": "example.com",  # e.g., "example.com" or "sub.example.com"
         "content": ip,
         "ttl": 1,  # Automatic TTL
         "proxied": True  # Set to True if you want CloudFlare to proxy the request
@@ -66,20 +70,31 @@ def update_cloudflare_dns(ip, mode):
         print(response.json())
 
 def sync_ip_to_cloudflare():
+    output = []
+    current_time = datetime.now()
+    formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    output.append("Execute at " + formatted_time)
     try:
         current_ip_v4 = get_current_ip_v4()
         current_ip_v6 = get_current_ip_v6()
         update_cloudflare_dns(current_ip_v4, "4")
         update_cloudflare_dns(current_ip_v6, "6")
-        print(f"IPv4 address: {current_ip_v4}")
-        print(f"IPv6 address: {current_ip_v6}")
+        output.append(f"IPv4 address: {current_ip_v4}")
+        output.append(f"IPv6 address: {current_ip_v6}")
     except SSLError as e:
         print(f"SSL error occurred: {e}")
     except MaxRetryError as e:
         print(f"Max retries exceeded: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
-    return None
+    return output
+
+def append_to_file(file_path, data):
+    with open(file_path, 'a') as file:
+        for item in data:
+            file.write(f"{item}\n")
 
 if __name__ == "__main__":
-    sync_ip_to_cloudflare()
+    execute_info = sync_ip_to_cloudflare()
+    append_to_file(LOG_DIR, execute_info)
