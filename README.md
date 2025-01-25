@@ -20,7 +20,7 @@ crontab -e
 e.g. every 6 h do 
 
 ```sh
-0 */6 * * * python Documents/MacDDNS/MacDDNS.py
+0 */6 * * * cd ~/Documents/MacDDNS && python MacDDNS.py
 ```
 
 ### CHECK
